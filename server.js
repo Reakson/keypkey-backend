@@ -12,7 +12,7 @@ const authRoutes = require("./routes/authRoutes");
 const vaultRoutes = require("./routes/vaultRoutes");
 
 const allowedOrigins = [
-  "http://localhost:5173",
+  "https://keypkey-web.vercel.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
