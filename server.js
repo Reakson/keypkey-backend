@@ -48,7 +48,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/password", vaultRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Secure Password Manager API Running");
+  res.send("KeypKey API - Secure Password Manager API Running");
 });
 
 const PORT = process.env.PORT || 3000;
