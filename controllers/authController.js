@@ -75,3 +75,57 @@ exports.loginUser = (req, res) => {
     });
   });
 };
+
+// RESET PASSWORD WITH RECOVERY TOKEN
+exports.resetPasswordWithRecoveryToken = (req, res) => {
+  const { email, recoveryKey, newPassword } = req.body;
+
+  if (!email || !recoveryKey || !newPassword) {
+    return res.status(400).json({
+      message: 'Email, recovery token, and new password are required.',
+    });
+  }
+
+  const trimmedRecoveryKey = String(recoveryKey).trim();
+
+  const sql = 'SELECT user_id, recovery_phrase_hash FROM users WHERE email = ? LIMIT 1';
+
+  db.query(sql, [email], async (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Account not found.' });
+    }
+
+    const user = results[0];
+
+    if (!user.recovery_phrase_hash) {
+      return res.status(400).json({ message: 'No recovery token is stored for this account.' });
+    }
+
+    const validRecoveryKey = await bcrypt.compare(trimmedRecoveryKey, user.recovery_phrase_hash);
+
+    if (!validRecoveryKey) {
+      return res.status(401).json({ message: 'Recovery token does not match our records.' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    db.query(
+      'UPDATE users SET password_hash = ? WHERE user_id = ?',
+      [passwordHash, user.user_id],
+      (updateErr) => {
+        if (updateErr) {
+          return res.status(500).json({ error: updateErr.message });
+        }
+
+        return res.json({
+          message: 'Password reset successful. You can now sign in with your new password.',
+        });
+      }
+    );
+  });
+};
+
